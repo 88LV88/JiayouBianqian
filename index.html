@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>韦丽萍高考加油！</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      height: 100vh;
+      overflow: hidden;
+      background-color: #f8f8f8;
+    }
+
+    /* 便签窗口样式 - Windows风格 */
+    .tip-window {
+      position: absolute;
+      width: 320px;
+      min-height: 120px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      font-family: "微软雅黑", "SimHei", sans-serif;
+      font-size: 16px;
+      z-index: 1000;
+      background-color: #ffe4e4;
+      overflow: hidden;
+    }
+
+    /* 窗口标题栏 */
+    .tip-window .title-bar {
+      display: flex;
+      align-items: center;
+      padding: 6px 8px;
+      background: linear-gradient(to bottom, #f0f0f0, #e0e0e0);
+      border-bottom: 1px solid #ccc;
+      cursor: move;
+    }
+
+    /* 窗口图标 */
+    .tip-window .title-bar .icon {
+      width: 16px;
+      height: 16px;
+      margin-right: 8px;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23333'%3E%3Cpath d='M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z'/%3E%3C/svg%3E") no-repeat center;
+      background-size: 16px;
+    }
+
+    /* 窗口标题 */
+    .tip-window .title-bar .title {
+      flex: 1;
+      font-size: 14px;
+      color: #333;
+      font-weight: 500;
+    }
+
+    /* 窗口按钮 */
+    .tip-window .title-bar .window-buttons {
+      display: flex;
+      gap: 2px;
+    }
+
+    .tip-window .title-bar .btn {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .tip-window .title-bar .btn.minimize {
+      background-color: #ffc048;
+    }
+
+    .tip-window .title-bar .btn.maximize {
+      background-color: #4cd964;
+    }
+
+    .tip-window .title-bar .btn.close {
+      background-color: #ff3b30;
+    }
+
+    /* 窗口内容 */
+    .tip-window .content {
+      padding: 15px;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    /* 爱心样式 */
+    .tip-window.to-heart {
+      background-color: #ff6b6b !important;
+      transform: rotate(720deg);
+      transition: all 0.8s ease-in-out;
+    }
+
+    .tip-window.to-heart .title-bar,
+    .tip-window.to-heart .content {
+      display: none;
+    }
+
+    .tip-window.to-heart::after {
+      content: '❤';
+      font-size: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: white;
+    }
+
+    /* 控制按钮 */
+    .control-panel {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2000;
+    }
+
+    #startBtn {
+      padding: 8px 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    #startBtn:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- 控制按钮 -->
+  <div class="control-panel">
+    <button id="startBtn">开始</button>
+  </div>
+
+  <script>
+    // 提示文字列表（与Python代码完全一致）
+    const tips = [
+      ' 十载灯窗磨利剑，今朝挥墨赴云天。', '心藏万卷从容答，一举题名锦绣前。', '每少年怀志踏征鞍，笔墨铿锵破万难。',
+      '静待金榜传喜讯，长风送汝入云端。', '从容落笔抒才学，折取青云第一标。', '伏案经年志未休，今朝试剑上层楼。', 
+      '万卷诗书凝底气，一身意气闯文闱。', '心平气定书答卷，不负韶华壮志酬。', '考场稳运生花笔，折桂登科好梦圆。', 
+      '蓄力经年蓄锦章，临场挥墨意气昂。', '寒来暑往伴书吟，砺剑修身蓄素心。', '少年逐梦踏书山，沥墨耕耘不等闲。'
+    ];
+
+    // 背景颜色列表（与Python代码完全一致）
+    const bgColors = [
+      'lightpink', 'skyblue', 'lightgreen', 'lavender', 'lightyellow',
+      'plum', 'coral', 'bisque', 'aquamarine', 'mistyrose', 'honeydew'
+    ];
+
+    let isRunning = false;
+
+    // 创建单个提示窗口（Windows风格）
+    function createTipWindow() {
+      if (!isRunning) return;
+
+      // 创建窗口元素
+      const div = document.createElement('div');
+      div.className = 'tip-window';
+
+      // 创建标题栏
+      const titleBar = document.createElement('div');
+      titleBar.className = 'title-bar';
+      
+      // 图标
+      const icon = document.createElement('div');
+      icon.className = 'icon';
+      
+      // 标题
+      const title = document.createElement('div');
+      title.className = 'title';
+      title.textContent = '高考祝福';
+      
+      // 窗口按钮
+      const buttons = document.createElement('div');
+      buttons.className = 'window-buttons';
+      
+      const minimizeBtn = document.createElement('div');
+      minimizeBtn.className = 'btn minimize';
+      minimizeBtn.textContent = '−';
+      
+      const maximizeBtn = document.createElement('div');
+      maximizeBtn.className = 'btn maximize';
+      maximizeBtn.textContent = '□';
+      
+      const closeBtn = document.createElement('div');
+      closeBtn.className = 'btn close';
+      closeBtn.textContent = '×';
+      
+      buttons.appendChild(minimizeBtn);
+      buttons.appendChild(maximizeBtn);
+      buttons.appendChild(closeBtn);
+      
+      titleBar.appendChild(icon);
+      titleBar.appendChild(title);
+      titleBar.appendChild(buttons);
+      
+      // 创建内容区域
+      const content = document.createElement('div');
+      content.className = 'content';
+      
+      // 随机选择提示文字
+      const tip = tips[Math.floor(Math.random() * tips.length)];
+      content.textContent = tip;
+      
+      // 组装窗口
+      div.appendChild(titleBar);
+      div.appendChild(content);
+      
+      // 随机背景颜色
+      const bgColor = bgColors[Math.floor(Math.random() * bgColors.length)];
+      div.style.backgroundColor = bgColor;
+
+      // 随机位置（确保窗口完全显示在屏幕内）
+      const maxX = window.innerWidth - 320;
+      const maxY = window.innerHeight - 120;
+      const x = Math.floor(Math.random() * maxX);
+      const y = Math.floor(Math.random() * maxY);
+      div.style.left = `${x}px`;
+      div.style.top = `${y}px`;
+
+      // 添加到页面
+      document.body.appendChild(div);
+
+      // 3秒后变为爱心，再1秒后消失
+      setTimeout(() => {
+        if (document.body.contains(div)) {
+          div.classList.add('to-heart');
+          
+          setTimeout(() => {
+            if (document.body.contains(div)) {
+              div.remove();
+            }
+          }, 1200);
+        }
+      }, 3000);
+    }
+
+    // 批量创建窗口（模拟线程效果）
+    function startShowingTips() {
+      if (isRunning) return;
+
+      isRunning = true;
+      const windowCount = 75; // 窗口数量与Python代码一致
+      const interval = 50; // 间隔时间（0.05秒）与Python代码一致
+
+      for (let i = 0; i < windowCount; i++) {
+        setTimeout(createTipWindow, i * interval);
+      }
+
+      // 全部创建完成后重置状态
+      setTimeout(() => {
+        isRunning = false;
+      }, windowCount * interval);
+    }
+
+    // 绑定按钮事件
+    document.getElementById('startBtn').addEventListener('click', startShowingTips);
+  </script>
+</body>
+
+</html>
